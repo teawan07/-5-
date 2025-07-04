@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+
+{% block title %}Signals - Forex Trading Signal System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-signal me-2"></i>
+                    Trading Signals
+                </h1>
+                
+                <!-- Signal Actions -->
+                <div class="btn-group" role="group">
+                    <button id="refresh-signals" type="button" class="btn btn-outline-primary">
+                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                    </button>
+                    <button id="export-signals" type="button" class="btn btn-outline-info">
+                        <i class="fas fa-download me-1"></i>Export History
+                    </button>
+                    <button id="clear-history" type="button" class="btn btn-outline-danger">
+                        <i class="fas fa-trash me-1"></i>Clear History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signal Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-bell fa-2x text-success mb-2"></i>
+                    <h6 class="card-title">Active Signals</h6>
+                    <h4 id="active-count" class="text-success mb-0">{{ active_signals|length }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-chart-line fa-2x text-info mb-2"></i>
+                    <h6 class="card-title">Total Signals</h6>
+                    <h4 id="total-count" class="text-info mb-0">{{ signal_history|length }}</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-check-circle fa-2x text-primary mb-2"></i>
+                    <h6 class="card-title">Hit TP</h6>
+                    <h4 id="tp-count" class="text-primary mb-0">0</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm text-center">
+                <div class="card-body">
+                    <i class="fas fa-times-circle fa-2x text-warning mb-2"></i>
+                    <h6 class="card-title">Hit SL</h6>
+                    <h4 id="sl-count" class="text-warning mb-0">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Signals Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bell me-2"></i>
+                        Active Signals
+                        <span class="badge bg-light text-success ms-2" id="active-badge">{{ active_signals|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="active-signals-container">
+                        {% if active_signals %}
+                            <div class="row">
+                                {% for signal in active_signals %}
+                                <div class="col-lg-6 mb-3">
+                                    <div class="card signal-card signal-{{ signal.signal_type.lower() }}">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                                <div>
+                                                    <h5 class="card-title mb-1">{{ signal.pair }}</h5>
+                                                    <span class="badge bg-{{ 'success' if signal.signal_type == 'BUY' else 'danger' }}">
+                                                        {{ signal.signal_type }}
+                                                    </span>
+                                                </div>
+                                                <div class="text-end">
+                                                    <div class="fw-bold h5">{{ signal.entry_price|currency }}</div>
+                                                    <small class="text-muted">{{ signal.confidence|percentage }} confidence</small>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="row text-center mb-3">
+                                                <div class="col-4">
+                                                    <small class="text-muted d-block">Take Profit</small>
+                                                    <span class="fw-bold text-success">{{ signal.tp_price|currency }}</span>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted d-block">Stop Loss</small>
+                                                    <span class="fw-bold text-danger">{{ signal.sl_price|currency }}</span>
+                                                </div>
+                                                <div class="col-4">
+                                                    <small class="text-muted d-block">Status</small>
+                                                    <span class="badge bg-warning">{{ signal.status.title() }}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="border-top pt-2">
+                                                <small class="text-muted">
+                                                    <i class="fas fa-clock me-1"></i>{{ signal.timestamp|datetime }}
+                                                </small>
+                                                <br>
+                                                <small class="text-muted">
+                                                    <i class="fas fa-info-circle me-1"></i>{{ signal.reason }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-5">
+                                <i class="fas fa-search fa-3x mb-3"></i>
+                                <h5>No Active Signals</h5>
+                                <p>New signals will appear here when generated by the system</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signal History Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>
+                            Signal History
+                        </h5>
+                        
+                        <!-- Filter Controls -->
+                        <div class="d-flex gap-2">
+                            <select id="filter-pair" class="form-select form-select-sm">
+                                <option value="">All Pairs</option>
+                                <option value="EURUSD">EUR/USD</option>
+                                <option value="EURJPY">EUR/JPY</option>
+                                <option value="EURGBP">EUR/GBP</option>
+                                <option value="AUDJPY">AUD/JPY</option>
+                                <option value="GBPJPY">GBP/JPY</option>
+                                <option value="GBPUSD">GBP/USD</option>
+                            </select>
+                            
+                            <select id="filter-type" class="form-select form-select-sm">
+                                <option value="">All Types</option>
+                                <option value="BUY">Buy Signals</option>
+                                <option value="SELL">Sell Signals</option>
+                            </select>
+                            
+                            <select id="filter-status" class="form-select form-select-sm">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="hit_tp">Hit TP</option>
+                                <option value="hit_sl">Hit SL</option>
+                                <option value="expired">Expired</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="signals-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Pair</th>
+                                    <th>Type</th>
+                                    <th>Entry</th>
+                                    <th>TP</th>
+                                    <th>SL</th>
+                                    <th>Confidence</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody id="signals-tbody">
+                                {% for signal in signal_history %}
+                                <tr data-pair="{{ signal.pair }}" data-type="{{ signal.signal_type }}" data-status="{{ signal.status }}">
+                                    <td>
+                                        <small>{{ signal.timestamp|datetime }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="fw-bold">{{ signal.pair }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'success' if signal.signal_type == 'BUY' else 'danger' }}">
+                                            {{ signal.signal_type }}
+                                        </span>
+                                    </td>
+                                    <td>{{ signal.entry_price|currency }}</td>
+                                    <td class="text-success">{{ signal.tp_price|currency }}</td>
+                                    <td class="text-danger">{{ signal.sl_price|currency }}</td>
+                                    <td>{{ signal.confidence|percentage }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if signal.status == 'hit_tp' %}success{% elif signal.status == 'hit_sl' %}danger{% elif signal.status == 'active' %}warning{% else %}secondary{% endif %}">
+                                            {% if signal.status == 'hit_tp' %}Hit TP
+                                            {% elif signal.status == 'hit_sl' %}Hit SL
+                                            {% elif signal.status == 'active' %}Active
+                                            {% else %}{{ signal.status.title() }}
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ signal.reason }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        
+                        {% if not signal_history %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-clock fa-3x mb-3"></i>
+                            <h5>No Signal History</h5>
+                            <p>Signal history will appear here once the system generates signals</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Signals page JavaScript
+let signalsUpdateInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupEventListeners();
+    startRealTimeUpdates();
+    updateStatistics();
+});
+
+function startRealTimeUpdates() {
+    // Update signals every 30 seconds
+    signalsUpdateInterval = setInterval(updateSignals, 30000);
+}
+
+function setupEventListeners() {
+    // Refresh signals button
+    document.getElementById('refresh-signals').addEventListener('click', function() {
+        setButtonLoading(this, true);
+        updateSignals().finally(() => {
+            setButtonLoading(this, false);
+        });
+    });
+    
+    // Export signals button
+    document.getElementById('export-signals').addEventListener('click', function() {
+        setButtonLoading(this, true);
+        
+        fetch('/api/export/signals')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(`Signal history exported to ${data.filename}`, 'success');
+                } else {
+                    showToast('Failed to export signals: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('Error exporting signals: ' + error, 'danger');
+            })
+            .finally(() => {
+                setButtonLoading(this, false);
+            });
+    });
+    
+    // Filter controls
+    document.getElementById('filter-pair').addEventListener('change', filterTable);
+    document.getElementById('filter-type').addEventListener('change', filterTable);
+    document.getElementById('filter-status').addEventListener('change', filterTable);
+    
+    // Clear history (with confirmation)
+    document.getElementById('clear-history').addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all signal history? This action cannot be undone.')) {
+            // This would need to be implemented in the backend
+            showToast('Clear history feature not yet implemented', 'info');
+        }
+    });
+}
+
+function updateSignals() {
+    return fetch('/api/signals')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateActiveSignals(data.data.active);
+                updateSignalHistory(data.data.history);
+                updateStatistics();
+            } else {
+                console.error('Failed to update signals:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error updating signals:', error);
+        });
+}
+
+function updateActiveSignals(signals) {
+    const container = document.getElementById('active-signals-container');
+    const badge = document.getElementById('active-badge');
+    
+    // Update badge count
+    badge.textContent = signals.length;
+    
+    if (signals.length === 0) {
+        container.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-search fa-3x mb-3"></i>
+                <h5>No Active Signals</h5>
+                <p>New signals will appear here when generated by the system</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const signalsHtml = signals.map(signal => `
+        <div class="col-lg-6 mb-3">
+            <div class="card signal-card signal-${signal.signal_type.toLowerCase()}">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <h5 class="card-title mb-1">${signal.pair}</h5>
+                            <span class="badge bg-${signal.signal_type === 'BUY' ? 'success' : 'danger'}">
+                                ${signal.signal_type}
+                            </span>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold h5">${formatCurrency(signal.entry_price)}</div>
+                            <small class="text-muted">${formatPercentage(signal.confidence)} confidence</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <small class="text-muted d-block">Take Profit</small>
+                            <span class="fw-bold text-success">${formatCurrency(signal.tp_price)}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Stop Loss</small>
+                            <span class="fw-bold text-danger">${formatCurrency(signal.sl_price)}</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block">Status</small>
+                            <span class="badge bg-warning">${signal.status.charAt(0).toUpperCase() + signal.status.slice(1)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="border-top pt-2">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i>${formatTimestamp(signal.timestamp)}
+                        </small>
+                        <br>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>${signal.reason}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = `<div class="row">${signalsHtml}</div>`;
+}
+
+function updateSignalHistory(signals) {
+    const tbody = document.getElementById('signals-tbody');
+    
+    if (signals.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted py-4">
+                    <i class="fas fa-clock fa-2x mb-2"></i><br>
+                    No signal history available
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Sort signals by timestamp (newest first)
+    const sortedSignals = signals.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    tbody.innerHTML = sortedSignals.map(signal => `
+        <tr data-pair="${signal.pair}" data-type="${signal.signal_type}" data-status="${signal.status}">
+            <td><small>${formatTimestamp(signal.timestamp)}</small></td>
+            <td><span class="fw-bold">${signal.pair}</span></td>
+            <td>
+                <span class="badge bg-${signal.signal_type === 'BUY' ? 'success' : 'danger'}">
+                    ${signal.signal_type}
+                </span>
+            </td>
+            <td>${formatCurrency(signal.entry_price)}</td>
+            <td class="text-success">${formatCurrency(signal.tp_price)}</td>
+            <td class="text-danger">${formatCurrency(signal.sl_price)}</td>
+            <td>${formatPercentage(signal.confidence)}</td>
+            <td>
+                <span class="badge bg-${getStatusColor(signal.status)}">
+                    ${getStatusText(signal.status)}
+                </span>
+            </td>
+            <td><small class="text-muted">${signal.reason}</small></td>
+        </tr>
+    `).join('');
+    
+    // Reapply filters
+    filterTable();
+}
+
+function getStatusColor(status) {
+    switch (status) {
+        case 'hit_tp': return 'success';
+        case 'hit_sl': return 'danger';
+        case 'active': return 'warning';
+        default: return 'secondary';
+    }
+}
+
+function getStatusText(status) {
+    switch (status) {
+        case 'hit_tp': return 'Hit TP';
+        case 'hit_sl': return 'Hit SL';
+        case 'active': return 'Active';
+        default: return status.charAt(0).toUpperCase() + status.slice(1);
+    }
+}
+
+function filterTable() {
+    const pairFilter = document.getElementById('filter-pair').value;
+    const typeFilter = document.getElementById('filter-type').value;
+    const statusFilter = document.getElementById('filter-status').value;
+    
+    const rows = document.querySelectorAll('#signals-tbody tr[data-pair]');
+    
+    rows.forEach(row => {
+        const pair = row.dataset.pair;
+        const type = row.dataset.type;
+        const status = row.dataset.status;
+        
+        const pairMatch = !pairFilter || pair === pairFilter;
+        const typeMatch = !typeFilter || type === typeFilter;
+        const statusMatch = !statusFilter || status === statusFilter;
+        
+        if (pairMatch && typeMatch && statusMatch) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+
+function updateStatistics() {
+    fetch('/api/signals')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const active = data.data.active.length;
+                const history = data.data.history;
+                const total = history.length;
+                const hitTp = history.filter(s => s.status === 'hit_tp').length;
+                const hitSl = history.filter(s => s.status === 'hit_sl').length;
+                
+                document.getElementById('active-count').textContent = active;
+                document.getElementById('total-count').textContent = total;
+                document.getElementById('tp-count').textContent = hitTp;
+                document.getElementById('sl-count').textContent = hitSl;
+            }
+        })
+        .catch(error => {
+            console.error('Error updating statistics:', error);
+        });
+}
+
+// Cleanup interval when page unloads
+window.addEventListener('beforeunload', function() {
+    if (signalsUpdateInterval) clearInterval(signalsUpdateInterval);
+});
+</script>
+{% endblock %}
