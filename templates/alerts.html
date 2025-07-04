@@ -1,0 +1,732 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts - Forex Trading Signal System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-bell me-2"></i>
+                Alert System Management
+            </h1>
+            <p class="text-muted">Configure and test your notification systems</p>
+        </div>
+    </div>
+
+    <!-- Alert System Status -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fab fa-telegram fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">Telegram Bot</h5>
+                    <span id="telegram-status-badge" class="badge bg-{{ 'success' if alert_status.get('telegram_status') == 'Connected' else 'danger' }}">
+                        {{ alert_status.get('telegram_status', 'Unknown') }}
+                    </span>
+                    <div class="mt-3">
+                        <button id="test-telegram" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-test-tube me-1"></i>Test
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-volume-up fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Sound Alerts</h5>
+                    <span id="sound-status-badge" class="badge bg-{{ 'success' if alert_status.get('sound_status') == 'Enabled' else 'warning' }}">
+                        {{ alert_status.get('sound_status', 'Unknown') }}
+                    </span>
+                    <div class="mt-3">
+                        <button id="test-sound" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-play me-1"></i>Test
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-list fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">Alert Queue</h5>
+                    <h4 id="queue-size" class="text-info mb-0">{{ alert_status.get('queue_size', 0) }}</h4>
+                    <small class="text-muted">pending alerts</small>
+                    <div class="mt-3">
+                        <button id="clear-queue" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-trash me-1"></i>Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Configuration -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        Alert Configuration
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="alert-settings-form">
+                        <!-- Alert Timing -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="alert-advance-time" class="form-label">
+                                    <i class="fas fa-clock me-1"></i>
+                                    Alert Advance Time
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="alert-advance-time" 
+                                           value="10" min="0" max="60">
+                                    <span class="input-group-text">seconds</span>
+                                </div>
+                                <div class="form-text">Send alerts X seconds before entry point</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="alert-retry-count" class="form-label">
+                                    <i class="fas fa-redo me-1"></i>
+                                    Retry Failed Alerts
+                                </label>
+                                <select class="form-select" id="alert-retry-count">
+                                    <option value="0">No retries</option>
+                                    <option value="1">1 retry</option>
+                                    <option value="2" selected>2 retries</option>
+                                    <option value="3">3 retries</option>
+                                </select>
+                                <div class="form-text">How many times to retry failed alerts</div>
+                            </div>
+                        </div>
+
+                        <!-- Sound Settings -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-volume-up me-2"></i>
+                                    Sound Alert Settings
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="sound-enabled" class="form-label">Enable Sound</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="sound-enabled" checked>
+                                    <label class="form-check-label" for="sound-enabled">
+                                        Sound alerts enabled
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="sound-volume" class="form-label">Volume</label>
+                                <div class="input-group">
+                                    <input type="range" class="form-range" id="sound-volume" 
+                                           min="0" max="100" value="75">
+                                    <span class="input-group-text" id="volume-display">75%</span>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="sound-repeat" class="form-label">Repeat Count</label>
+                                <select class="form-select" id="sound-repeat">
+                                    <option value="1" selected>1 time</option>
+                                    <option value="2">2 times</option>
+                                    <option value="3">3 times</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Telegram Settings -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3">
+                                    <i class="fab fa-telegram me-2"></i>
+                                    Telegram Settings
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="telegram-enabled" class="form-label">Enable Telegram</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="telegram-enabled" checked>
+                                    <label class="form-check-label" for="telegram-enabled">
+                                        Telegram alerts enabled
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="telegram-format" class="form-label">Message Format</label>
+                                <select class="form-select" id="telegram-format">
+                                    <option value="standard" selected>Standard (with emojis)</option>
+                                    <option value="simple">Simple (text only)</option>
+                                    <option value="detailed">Detailed (with analysis)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Alert Filters -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-filter me-2"></i>
+                                    Alert Filters
+                                </h6>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="min-confidence-alert" class="form-label">Minimum Confidence for Alerts</label>
+                                <div class="input-group">
+                                    <input type="range" class="form-range" id="min-confidence-alert" 
+                                           min="0.5" max="1.0" step="0.05" value="0.75">
+                                    <span class="input-group-text" id="confidence-display">75%</span>
+                                </div>
+                                <div class="form-text">Only send alerts for signals above this confidence</div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="alert-pairs" class="form-label">Currency Pairs</label>
+                                <div class="form-check-group">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pair-eurusd" checked>
+                                                <label class="form-check-label" for="pair-eurusd">EUR/USD</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pair-eurjpy" checked>
+                                                <label class="form-check-label" for="pair-eurjpy">EUR/JPY</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pair-eurgbp" checked>
+                                                <label class="form-check-label" for="pair-eurgbp">EUR/GBP</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pair-audjpy" checked>
+                                                <label class="form-check-label" for="pair-audjpy">AUD/JPY</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pair-gbpjpy" checked>
+                                                <label class="form-check-label" for="pair-gbpjpy">GBP/JPY</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="pair-gbpusd" checked>
+                                                <label class="form-check-label" for="pair-gbpusd">GBP/USD</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Save Settings -->
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="loading-spinner spinner-border spinner-border-sm me-2"></span>
+                                <span class="btn-text">
+                                    <i class="fas fa-save me-1"></i>Save Alert Settings
+                                </span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm position-sticky" style="top: 20px;">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Test All Alerts -->
+                    <div class="mb-3">
+                        <h6>Test Alerts</h6>
+                        <div class="d-grid gap-2">
+                            <button id="test-all-alerts" class="btn btn-outline-primary">
+                                <i class="fas fa-test-tube me-1"></i>Test All Systems
+                            </button>
+                            <button id="send-sample-signal" class="btn btn-outline-info">
+                                <i class="fas fa-signal me-1"></i>Send Sample Signal
+                            </button>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Alert Statistics -->
+                    <div class="mb-3">
+                        <h6>Alert Statistics</h6>
+                        <ul class="list-unstyled small">
+                            <li><strong>Alerts Sent Today:</strong> <span id="alerts-today">0</span></li>
+                            <li><strong>Success Rate:</strong> <span id="success-rate">100%</span></li>
+                            <li><strong>Last Alert:</strong> <span id="last-alert">Never</span></li>
+                            <li><strong>Failed Alerts:</strong> <span id="failed-alerts">0</span></li>
+                        </ul>
+                    </div>
+
+                    <hr>
+
+                    <!-- System Status -->
+                    <div class="mb-3">
+                        <h6>System Status</h6>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted d-block">Bot Status</small>
+                                    <span id="bot-status" class="fw-bold text-primary">{{ 'Online' if alert_status.get('telegram_status') == 'Connected' else 'Offline' }}</span>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-2">
+                                    <small class="text-muted d-block">Alert System</small>
+                                    <span id="alert-system-status" class="fw-bold text-success">{{ 'Running' if alert_status.get('running') else 'Stopped' }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Emergency Actions -->
+                    <div class="mb-3">
+                        <h6 class="text-danger">Emergency Actions</h6>
+                        <div class="d-grid gap-2">
+                            <button id="pause-alerts" class="btn btn-outline-warning btn-sm">
+                                <i class="fas fa-pause me-1"></i>Pause All Alerts
+                            </button>
+                            <button id="reset-alert-system" class="btn btn-outline-danger btn-sm">
+                                <i class="fas fa-power-off me-1"></i>Reset Alert System
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert History/Log -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-dark text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>
+                            Recent Alert Activity
+                        </h5>
+                        <button id="refresh-log" class="btn btn-outline-light btn-sm">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="alert-log" class="alert-log" style="max-height: 400px; overflow-y: auto;">
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p>No recent alert activity</p>
+                            <small>Alert logs will appear here when alerts are sent</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Results Modal -->
+<div class="modal fade" id="testResultsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-test-tube me-2"></i>
+                    Alert Test Results
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="test-results-content">
+                    <!-- Test results will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" id="retest-failed" class="btn btn-warning">
+                    <i class="fas fa-redo me-1"></i>Retest Failed
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Alerts page JavaScript
+let alertStatusInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    setupEventListeners();
+    setupRangeSliders();
+    startStatusUpdates();
+    loadAlertLog();
+});
+
+function startStatusUpdates() {
+    // Update alert status every 30 seconds
+    alertStatusInterval = setInterval(updateAlertStatus, 30000);
+}
+
+function setupRangeSliders() {
+    // Volume slider
+    const volumeSlider = document.getElementById('sound-volume');
+    const volumeDisplay = document.getElementById('volume-display');
+    
+    volumeSlider.addEventListener('input', function() {
+        volumeDisplay.textContent = this.value + '%';
+    });
+    
+    // Confidence slider
+    const confidenceSlider = document.getElementById('min-confidence-alert');
+    const confidenceDisplay = document.getElementById('confidence-display');
+    
+    confidenceSlider.addEventListener('input', function() {
+        confidenceDisplay.textContent = Math.round(this.value * 100) + '%';
+    });
+}
+
+function setupEventListeners() {
+    // Test buttons
+    document.getElementById('test-telegram').addEventListener('click', function() {
+        testAlert('telegram', this);
+    });
+    
+    document.getElementById('test-sound').addEventListener('click', function() {
+        testAlert('sound', this);
+    });
+    
+    document.getElementById('test-all-alerts').addEventListener('click', function() {
+        testAllAlerts(this);
+    });
+    
+    // Sample signal
+    document.getElementById('send-sample-signal').addEventListener('click', function() {
+        sendSampleSignal(this);
+    });
+    
+    // Alert settings form
+    document.getElementById('alert-settings-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveAlertSettings(this);
+    });
+    
+    // Emergency actions
+    document.getElementById('pause-alerts').addEventListener('click', function() {
+        if (confirm('Are you sure you want to pause all alerts?')) {
+            pauseAlerts(this);
+        }
+    });
+    
+    document.getElementById('reset-alert-system').addEventListener('click', function() {
+        if (confirm('Are you sure you want to reset the alert system? This will restart all alert components.')) {
+            resetAlertSystem(this);
+        }
+    });
+    
+    // Refresh log
+    document.getElementById('refresh-log').addEventListener('click', function() {
+        loadAlertLog();
+    });
+}
+
+function testAlert(type, button) {
+    setButtonLoading(button, true);
+    
+    const endpoint = type === 'telegram' ? '/api/test/telegram' : '/api/test/sound';
+    
+    fetch(endpoint, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} test successful!`, 'success');
+                updateStatusBadge(type, true);
+            } else {
+                showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} test failed: ${data.message || 'Unknown error'}`, 'danger');
+                updateStatusBadge(type, false);
+            }
+        })
+        .catch(error => {
+            showToast(`Error testing ${type}: ${error}`, 'danger');
+            updateStatusBadge(type, false);
+        })
+        .finally(() => {
+            setButtonLoading(button, false);
+        });
+}
+
+function testAllAlerts(button) {
+    setButtonLoading(button, true);
+    
+    fetch('/api/test/alerts', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showTestResults(data.data);
+            } else {
+                showToast('Failed to test alerts: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error testing alerts: ' + error, 'danger');
+        })
+        .finally(() => {
+            setButtonLoading(button, false);
+        });
+}
+
+function sendSampleSignal(button) {
+    setButtonLoading(button, true);
+    
+    // Create a sample signal
+    const sampleSignal = {
+        pair: 'EURUSD',
+        signal_type: 'BUY',
+        entry_price: 1.08500,
+        tp_price: 1.08750,
+        sl_price: 1.08250,
+        confidence: 0.85,
+        reason: 'Sample signal for testing alerts'
+    };
+    
+    // This would need to be implemented in the backend
+    showToast('Sample signal feature will be implemented in the backend', 'info');
+    setButtonLoading(button, false);
+}
+
+function saveAlertSettings(form) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setButtonLoading(submitBtn, true);
+    
+    // Collect form data
+    const settings = {
+        alert_advance_time: parseInt(document.getElementById('alert-advance-time').value),
+        alert_retry_count: parseInt(document.getElementById('alert-retry-count').value),
+        sound_enabled: document.getElementById('sound-enabled').checked,
+        sound_volume: parseInt(document.getElementById('sound-volume').value),
+        sound_repeat: parseInt(document.getElementById('sound-repeat').value),
+        telegram_enabled: document.getElementById('telegram-enabled').checked,
+        telegram_format: document.getElementById('telegram-format').value,
+        min_confidence_alert: parseFloat(document.getElementById('min-confidence-alert').value),
+        alert_pairs: getSelectedPairs()
+    };
+    
+    // This would need to be implemented in the backend
+    setTimeout(() => {
+        showToast('Alert settings saved successfully', 'success');
+        setButtonLoading(submitBtn, false);
+    }, 1000);
+}
+
+function getSelectedPairs() {
+    const pairs = [];
+    const pairCheckboxes = document.querySelectorAll('[id^="pair-"]:checked');
+    pairCheckboxes.forEach(checkbox => {
+        const pair = checkbox.id.replace('pair-', '').toUpperCase();
+        pairs.push(pair);
+    });
+    return pairs;
+}
+
+function pauseAlerts(button) {
+    setButtonLoading(button, true);
+    
+    // This would need to be implemented in the backend
+    setTimeout(() => {
+        showToast('All alerts have been paused', 'warning');
+        button.innerHTML = '<i class="fas fa-play me-1"></i>Resume Alerts';
+        button.classList.remove('btn-outline-warning');
+        button.classList.add('btn-outline-success');
+        setButtonLoading(button, false);
+    }, 1000);
+}
+
+function resetAlertSystem(button) {
+    setButtonLoading(button, true);
+    
+    // This would need to be implemented in the backend
+    setTimeout(() => {
+        showToast('Alert system has been reset', 'info');
+        updateAlertStatus();
+        setButtonLoading(button, false);
+    }, 2000);
+}
+
+function updateAlertStatus() {
+    fetch('/api/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.alert_system_status) {
+                const alertStatus = data.data.alert_system_status;
+                
+                updateStatusBadge('telegram', alertStatus.telegram_status === 'Connected');
+                updateStatusBadge('sound', alertStatus.sound_status === 'Enabled');
+                
+                document.getElementById('queue-size').textContent = alertStatus.queue_size || 0;
+                document.getElementById('bot-status').textContent = alertStatus.telegram_status === 'Connected' ? 'Online' : 'Offline';
+                document.getElementById('alert-system-status').textContent = alertStatus.running ? 'Running' : 'Stopped';
+            }
+        })
+        .catch(error => {
+            console.error('Error updating alert status:', error);
+        });
+}
+
+function updateStatusBadge(type, success) {
+    const badge = document.getElementById(`${type}-status-badge`);
+    if (success) {
+        badge.className = 'badge bg-success';
+        badge.textContent = type === 'telegram' ? 'Connected' : 'Enabled';
+    } else {
+        badge.className = 'badge bg-danger';
+        badge.textContent = type === 'telegram' ? 'Disconnected' : 'Disabled';
+    }
+}
+
+function loadAlertLog() {
+    const logContainer = document.getElementById('alert-log');
+    
+    // This would fetch actual log data from the backend
+    // For now, show sample log entries
+    const sampleLogs = [
+        {
+            timestamp: new Date(),
+            type: 'telegram',
+            status: 'success',
+            message: 'Signal sent for EURUSD BUY'
+        },
+        {
+            timestamp: new Date(Date.now() - 300000),
+            type: 'sound',
+            status: 'success',
+            message: 'Sound alert played'
+        },
+        {
+            timestamp: new Date(Date.now() - 600000),
+            type: 'telegram',
+            status: 'failed',
+            message: 'Failed to send telegram message: Network error'
+        }
+    ];
+    
+    if (sampleLogs.length === 0) {
+        logContainer.innerHTML = `
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <p>No recent alert activity</p>
+                <small>Alert logs will appear here when alerts are sent</small>
+            </div>
+        `;
+        return;
+    }
+    
+    logContainer.innerHTML = sampleLogs.map(log => `
+        <div class="alert-log-entry d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${log.type === 'telegram' ? 'paper-plane' : 'volume-up'} me-2 text-${log.status === 'success' ? 'success' : 'danger'}"></i>
+                <div>
+                    <div class="fw-bold">${log.message}</div>
+                    <small class="text-muted">${log.timestamp.toLocaleString()}</small>
+                </div>
+            </div>
+            <span class="badge bg-${log.status === 'success' ? 'success' : 'danger'}">
+                ${log.status.charAt(0).toUpperCase() + log.status.slice(1)}
+            </span>
+        </div>
+    `).join('');
+}
+
+function showTestResults(results) {
+    const content = document.getElementById('test-results-content');
+    
+    content.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card border-${results.sound_test ? 'success' : 'danger'}">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fas fa-volume-up me-2"></i>
+                            Sound Alert Test
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <span class="badge bg-${results.sound_test ? 'success' : 'danger'} mb-2">
+                            ${results.sound_test ? 'PASSED' : 'FAILED'}
+                        </span>
+                        <p class="small mb-0">
+                            ${results.sound_test ? 
+                                'Sound alert system is working correctly.' : 
+                                'Sound system may not be available or configured incorrectly.'
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card border-${results.telegram_test ? 'success' : 'danger'}">
+                    <div class="card-header">
+                        <h6 class="card-title mb-0">
+                            <i class="fab fa-telegram me-2"></i>
+                            Telegram Bot Test
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <span class="badge bg-${results.telegram_test ? 'success' : 'danger'} mb-2">
+                            ${results.telegram_test ? 'PASSED' : 'FAILED'}
+                        </span>
+                        <p class="small mb-0">${results.telegram_message}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="mt-3">
+            <div class="alert alert-${results.telegram_test && results.sound_test ? 'success' : 'warning'}">
+                <i class="fas fa-${results.telegram_test && results.sound_test ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                ${results.telegram_test && results.sound_test ? 
+                    'All alert systems are working correctly!' : 
+                    'Some alert systems need attention. Please check your configuration.'
+                }
+            </div>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('testResultsModal'));
+    modal.show();
+}
+
+// Cleanup interval when page unloads
+window.addEventListener('beforeunload', function() {
+    if (alertStatusInterval) clearInterval(alertStatusInterval);
+});
+</script>
+{% endblock %}

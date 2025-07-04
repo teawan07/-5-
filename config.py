@@ -1,5 +1,6 @@
 import os
 from datetime import datetime
+import pytz
 
 class Config:
     # Currency pairs to monitor
@@ -60,6 +61,5 @@ class Config:
         
     @classmethod
     def get_current_time(cls):
-        from pytz import timezone
-        tz = timezone(cls.TIMEZONE)
+        tz = pytz.timezone(cls.TIMEZONE)
         return datetime.now(tz)
