@@ -1,0 +1,589 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration - Forex Trading Signal System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-cog me-2"></i>
+                System Configuration
+            </h1>
+            <p class="text-muted">Configure Telegram bot, alert settings, and trading parameters</p>
+        </div>
+    </div>
+
+    <!-- Configuration Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <form id="config-form">
+                <!-- Telegram Configuration -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fab fa-telegram me-2"></i>
+                            Telegram Bot Configuration
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Setup Instructions:</strong>
+                            <ol class="mb-0 mt-2">
+                                <li>Message <a href="https://t.me/BotFather" target="_blank">@BotFather</a> on Telegram</li>
+                                <li>Create a new bot with <code>/newbot</code></li>
+                                <li>Copy the Bot Token below</li>
+                                <li>Get your Chat ID by messaging <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a></li>
+                            </ol>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telegram_bot_token" class="form-label">Bot Token</label>
+                                    <input type="text" class="form-control" id="telegram_bot_token" 
+                                           placeholder="123456789:ABCD-EFGHijklmnopQRSTuvwxyz">
+                                    <div class="form-text">Get this from @BotFather</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="telegram_chat_id" class="form-label">Chat ID</label>
+                                    <input type="text" class="form-control" id="telegram_chat_id" 
+                                           placeholder="123456789">
+                                    <div class="form-text">Your personal chat ID or group chat ID</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="button" id="test-telegram-config" class="btn btn-outline-primary">
+                                <i class="fas fa-test-tube me-1"></i>Test Connection
+                            </button>
+                            <button type="button" id="save-telegram-config" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i>Save Telegram Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Trading Parameters -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Trading Parameters
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="min_confidence" class="form-label">Minimum Confidence</label>
+                                    <div class="input-group">
+                                        <input type="range" class="form-range" id="min_confidence" 
+                                               min="0.5" max="1.0" step="0.05" value="0.75">
+                                        <span class="input-group-text" id="min_confidence_value">75%</span>
+                                    </div>
+                                    <div class="form-text">Only signals above this confidence will be sent</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="scan_interval" class="form-label">Scan Interval (minutes)</label>
+                                    <select class="form-select" id="scan_interval">
+                                        <option value="900">15 minutes</option>
+                                        <option value="1200">20 minutes</option>
+                                        <option value="1500">25 minutes</option>
+                                        <option value="1800">30 minutes</option>
+                                    </select>
+                                    <div class="form-text">How often to scan for new signals</div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="alert_advance_time" class="form-label">Alert Advance Time (seconds)</label>
+                                    <input type="number" class="form-control" id="alert_advance_time" 
+                                           value="10" min="0" max="60">
+                                    <div class="form-text">Send alerts X seconds before entry point</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TP/SL Configuration -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-target me-2"></i>
+                            Take Profit / Stop Loss Settings
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="min_tp_sl_points" class="form-label">Minimum TP/SL Points</label>
+                                    <input type="number" class="form-control" id="min_tp_sl_points" 
+                                           value="50" min="10" max="200">
+                                    <div class="form-text">Minimum points for Take Profit and Stop Loss</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="max_tp_sl_points" class="form-label">Maximum TP/SL Points</label>
+                                    <input type="number" class="form-control" id="max_tp_sl_points" 
+                                           value="100" min="50" max="500">
+                                    <div class="form-text">Maximum points for Take Profit and Stop Loss</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Points Explanation:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li><strong>For JPY pairs:</strong> 1 point = 0.01 (e.g., 50 points = 0.50)</li>
+                                <li><strong>For other pairs:</strong> 1 point = 0.0001 (e.g., 50 points = 0.0050)</li>
+                                <li>TP/SL levels are calculated dynamically based on market volatility</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Currency Pairs -->
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-globe me-2"></i>
+                            Monitored Currency Pairs
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div id="currency-pairs-list" class="d-flex flex-wrap gap-2">
+                                    <!-- Currency pair badges will be populated here -->
+                                </div>
+                                <div class="form-text mt-2">
+                                    These are the currency pairs currently being monitored for trading signals.
+                                    Contact support to modify this list.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save All Configuration -->
+                <div class="d-flex justify-content-end gap-2 mb-4">
+                    <button type="button" id="reset-config" class="btn btn-outline-secondary">
+                        <i class="fas fa-undo me-1"></i>Reset to Defaults
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="loading-spinner spinner-border spinner-border-sm me-2"></span>
+                        <span class="btn-text">
+                            <i class="fas fa-save me-1"></i>Save All Settings
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Configuration Status -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm position-sticky" style="top: 20px;">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Configuration Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Telegram Bot</h6>
+                        <span id="telegram-config-status" class="badge bg-secondary">Not Configured</span>
+                        <div id="telegram-bot-info" class="mt-2 small text-muted">
+                            Configure your Telegram bot to receive trading alerts
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6>Trading Parameters</h6>
+                        <ul class="list-unstyled small">
+                            <li><strong>Confidence Threshold:</strong> <span id="current-confidence">75%</span></li>
+                            <li><strong>Scan Interval:</strong> <span id="current-scan-interval">15 minutes</span></li>
+                            <li><strong>Alert Timing:</strong> <span id="current-alert-timing">10 seconds</span></li>
+                        </ul>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6>TP/SL Settings</h6>
+                        <ul class="list-unstyled small">
+                            <li><strong>Min Points:</strong> <span id="current-min-points">50</span></li>
+                            <li><strong>Max Points:</strong> <span id="current-max-points">100</span></li>
+                        </ul>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="mb-3">
+                        <h6>Quick Actions</h6>
+                        <div class="d-grid gap-2">
+                            <button type="button" id="test-all-alerts" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-test-tube me-1"></i>Test All Alerts
+                            </button>
+                            <button type="button" id="export-config" class="btn btn-outline-info btn-sm">
+                                <i class="fas fa-download me-1"></i>Export Config
+                            </button>
+                            <button type="button" id="view-logs" class="btn btn-outline-secondary btn-sm">
+                                <i class="fas fa-file-alt me-1"></i>View System Logs
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Results Modal -->
+<div class="modal fade" id="testResultsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-test-tube me-2"></i>
+                    Test Results
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="test-results-content">
+                    <!-- Test results will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Configuration page JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    loadCurrentConfiguration();
+    setupEventListeners();
+    setupRangeSliders();
+});
+
+function loadCurrentConfiguration() {
+    fetch('/api/config')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateConfigForm(data.data);
+                updateConfigStatus(data.data);
+            } else {
+                showToast('Error loading configuration: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading configuration:', error);
+            showToast('Error loading configuration', 'danger');
+        });
+}
+
+function populateConfigForm(config) {
+    // Telegram settings
+    document.getElementById('telegram_bot_token').value = config.telegram_bot_token || '';
+    document.getElementById('telegram_chat_id').value = config.telegram_chat_id || '';
+    
+    // Trading parameters
+    document.getElementById('min_confidence').value = config.min_confidence || 0.75;
+    document.getElementById('scan_interval').value = config.scan_interval || 900;
+    document.getElementById('min_tp_sl_points').value = config.min_tp_sl_points || 50;
+    document.getElementById('max_tp_sl_points').value = config.max_tp_sl_points || 100;
+    
+    // Update range slider display
+    updateConfidenceDisplay();
+    
+    // Currency pairs
+    populateCurrencyPairs(config.currency_pairs || []);
+}
+
+function populateCurrencyPairs(pairs) {
+    const container = document.getElementById('currency-pairs-list');
+    container.innerHTML = pairs.map(pair => 
+        `<span class="badge bg-primary">${pair}</span>`
+    ).join('');
+}
+
+function updateConfigStatus(config) {
+    // Telegram status
+    const telegramStatus = document.getElementById('telegram-config-status');
+    const telegramInfo = document.getElementById('telegram-bot-info');
+    
+    if (config.telegram_bot_token && config.telegram_chat_id) {
+        telegramStatus.className = 'badge bg-success';
+        telegramStatus.textContent = 'Configured';
+        telegramInfo.textContent = 'Telegram bot is configured and ready';
+    } else {
+        telegramStatus.className = 'badge bg-warning';
+        telegramStatus.textContent = 'Incomplete';
+        telegramInfo.textContent = 'Please configure bot token and chat ID';
+    }
+    
+    // Current values
+    document.getElementById('current-confidence').textContent = 
+        Math.round((config.min_confidence || 0.75) * 100) + '%';
+    document.getElementById('current-scan-interval').textContent = 
+        Math.round((config.scan_interval || 900) / 60) + ' minutes';
+    document.getElementById('current-min-points').textContent = config.min_tp_sl_points || 50;
+    document.getElementById('current-max-points').textContent = config.max_tp_sl_points || 100;
+}
+
+function setupRangeSliders() {
+    const confidenceSlider = document.getElementById('min_confidence');
+    const confidenceValue = document.getElementById('min_confidence_value');
+    
+    function updateConfidenceDisplay() {
+        const value = Math.round(confidenceSlider.value * 100);
+        confidenceValue.textContent = value + '%';
+    }
+    
+    confidenceSlider.addEventListener('input', updateConfidenceDisplay);
+    updateConfidenceDisplay();
+}
+
+function setupEventListeners() {
+    // Test Telegram configuration
+    document.getElementById('test-telegram-config').addEventListener('click', function() {
+        const botToken = document.getElementById('telegram_bot_token').value.trim();
+        const chatId = document.getElementById('telegram_chat_id').value.trim();
+        
+        if (!botToken || !chatId) {
+            showToast('Please enter both Bot Token and Chat ID', 'warning');
+            return;
+        }
+        
+        setButtonLoading(this, true);
+        
+        // First save the configuration, then test
+        const configData = {
+            telegram_bot_token: botToken,
+            telegram_chat_id: chatId
+        };
+        
+        fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Now test the connection
+                return fetch('/api/test/telegram', { method: 'POST' });
+            } else {
+                throw new Error(data.error);
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Telegram test successful! Check your chat for a test message.', 'success');
+                updateConfigStatus({ telegram_bot_token: botToken, telegram_chat_id: chatId });
+            } else {
+                showToast('Telegram test failed: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error testing Telegram: ' + error.message, 'danger');
+        })
+        .finally(() => {
+            setButtonLoading(this, false);
+        });
+    });
+    
+    // Save Telegram configuration
+    document.getElementById('save-telegram-config').addEventListener('click', function() {
+        const botToken = document.getElementById('telegram_bot_token').value.trim();
+        const chatId = document.getElementById('telegram_chat_id').value.trim();
+        
+        if (!botToken || !chatId) {
+            showToast('Please enter both Bot Token and Chat ID', 'warning');
+            return;
+        }
+        
+        setButtonLoading(this, true);
+        
+        const configData = {
+            telegram_bot_token: botToken,
+            telegram_chat_id: chatId
+        };
+        
+        fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Telegram configuration saved successfully', 'success');
+                updateConfigStatus(configData);
+            } else {
+                showToast('Error saving configuration: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error saving configuration: ' + error, 'danger');
+        })
+        .finally(() => {
+            setButtonLoading(this, false);
+        });
+    });
+    
+    // Save all configuration
+    document.getElementById('config-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = this.querySelector('button[type="submit"]');
+        setButtonLoading(submitBtn, true);
+        
+        const configData = {
+            telegram_bot_token: document.getElementById('telegram_bot_token').value.trim(),
+            telegram_chat_id: document.getElementById('telegram_chat_id').value.trim(),
+            min_confidence: parseFloat(document.getElementById('min_confidence').value),
+            scan_interval: parseInt(document.getElementById('scan_interval').value),
+            min_tp_sl_points: parseInt(document.getElementById('min_tp_sl_points').value),
+            max_tp_sl_points: parseInt(document.getElementById('max_tp_sl_points').value)
+        };
+        
+        fetch('/api/config', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('All settings saved successfully', 'success');
+                updateConfigStatus(configData);
+            } else {
+                showToast('Error saving settings: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            showToast('Error saving settings: ' + error, 'danger');
+        })
+        .finally(() => {
+            setButtonLoading(submitBtn, false);
+        });
+    });
+    
+    // Test all alerts
+    document.getElementById('test-all-alerts').addEventListener('click', function() {
+        setButtonLoading(this, true);
+        
+        fetch('/api/test/alerts', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showTestResults(data.data);
+                } else {
+                    showToast('Error testing alerts: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('Error testing alerts: ' + error, 'danger');
+            })
+            .finally(() => {
+                setButtonLoading(this, false);
+            });
+    });
+    
+    // Reset configuration
+    document.getElementById('reset-config').addEventListener('click', function() {
+        if (confirm('Are you sure you want to reset all settings to defaults?')) {
+            // Reset form to default values
+            document.getElementById('min_confidence').value = 0.75;
+            document.getElementById('scan_interval').value = 900;
+            document.getElementById('min_tp_sl_points').value = 50;
+            document.getElementById('max_tp_sl_points').value = 100;
+            
+            updateConfidenceDisplay();
+            showToast('Settings reset to defaults. Click "Save All Settings" to apply.', 'info');
+        }
+    });
+    
+    // Export configuration
+    document.getElementById('export-config').addEventListener('click', function() {
+        fetch('/api/config')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const configJson = JSON.stringify(data.data, null, 2);
+                    const blob = new Blob([configJson], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'forex_trading_config.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showToast('Configuration exported successfully', 'success');
+                } else {
+                    showToast('Error exporting configuration: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                showToast('Error exporting configuration: ' + error, 'danger');
+            });
+    });
+}
+
+function showTestResults(results) {
+    const content = document.getElementById('test-results-content');
+    
+    content.innerHTML = `
+        <div class="mb-3">
+            <h6>Sound Alert Test</h6>
+            <span class="badge bg-${results.sound_test ? 'success' : 'danger'}">
+                ${results.sound_test ? 'Passed' : 'Failed'}
+            </span>
+            ${!results.sound_test ? '<div class="text-muted small">Sound system may not be available</div>' : ''}
+        </div>
+        
+        <div class="mb-3">
+            <h6>Telegram Test</h6>
+            <span class="badge bg-${results.telegram_test ? 'success' : 'danger'}">
+                ${results.telegram_test ? 'Passed' : 'Failed'}
+            </span>
+            <div class="text-muted small">${results.telegram_message}</div>
+        </div>
+        
+        ${results.telegram_test ? 
+            '<div class="alert alert-success"><i class="fas fa-check me-2"></i>All tests passed! Check your Telegram for the test message.</div>' :
+            '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>Some tests failed. Please check your configuration.</div>'
+        }
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('testResultsModal'));
+    modal.show();
+}
+</script>
+{% endblock %}
